@@ -1,4 +1,4 @@
-package app.vrr.inwindow.ui.theme
+package app.vrr.inwindow.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
