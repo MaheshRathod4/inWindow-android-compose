@@ -18,20 +18,14 @@ fun CustomerScreen(
     viewModel: CustomerViewModel = hiltViewModel(),
     topBar: @Composable () -> Unit = {}
 ) {
-    Scaffold(
-        modifier = Modifier.systemBarsPadding(),
-        topBar = topBar,
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Customer Screen",
-                textAlign = TextAlign.Center
-            )
-        }
+        Text(
+            text = "Customer Screen",
+            textAlign = TextAlign.Center
+        )
     }
 }

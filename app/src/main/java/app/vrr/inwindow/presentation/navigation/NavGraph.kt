@@ -1,5 +1,6 @@
 package app.vrr.inwindow.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -18,6 +19,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavDestination
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -25,12 +29,9 @@ import app.vrr.inwindow.presentation.ui.customer.CustomerScreen
 import app.vrr.inwindow.presentation.ui.dashboard.DashboardScreen
 import app.vrr.inwindow.presentation.ui.settings.SettingsScreen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NavGraph(
-    navController: NavHostController = rememberNavController(),
-    modifier: Modifier = Modifier
-) {
+fun NavGraph(navController: NavHostController = rememberNavController()) {
+
     val navItems = listOf(
         DashboardTabItem,
         CustomerTabItem,
@@ -38,81 +39,85 @@ fun NavGraph(
     )
 
     Scaffold(
-        modifier = modifier,
+        topBar = {
+            TopAppBar(navController)
+        },
         bottomBar = {
-            NavigationBar() {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                navItems.forEach { item ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                painter = painterResource(item.iconRes),
-                                contentDescription = item.title
-                            )
-                        },
-                        label = { Text(item.title) },
-                        selected = currentRoute == item.route,
-                        onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    )
-                }
-            }
-        }
+            BottomNavBar(navController, navItems)
+        },
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = DashboardTabItem.route,
-            modifier = Modifier
-                .fillMaxSize()
+        Box(modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
         ) {
-            composable(DashboardTabItem.route) {
-                DashboardScreen(
-                    topBar = {
-                        TopAppBar(
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            title = { Text(text = "Dashboard") }
-                        )
-                    }
-                )
-            }
-            composable(CustomerTabItem.route) {
-                CustomerScreen(
-                    topBar = {
-                        TopAppBar(
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            title = { Text(text = "Customer") }
-                        )
-                    }
-                )
-            }
-            composable(SettingsTabItem.route) {
-                SettingsScreen(
-                    topBar = {
-                        TopAppBar(
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                            title = { Text(text = "Settings") }
-                        )
-                    }
-                )
-            }
+            AppNavGraph(navController)
         }
+    }
+}
+
+@Composable
+fun currentRoute(navController: NavHostController): String? {
+    val entry by navController.currentBackStackEntryAsState()
+    return entry?.destination?.route
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBar(navController: NavHostController) {
+    val currentRoute = currentRoute(navController)
+    TopAppBar(
+        title = {
+            Text(
+                text = when (currentRoute) {
+                    DashboardTabItem.route -> "Home"
+                    CustomerTabItem.route -> "Profile"
+                    SettingsTabItem.route -> "Settings"
+                    else -> ""
+                }
+            )
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        )
+    )
+}
+
+@Composable
+fun BottomNavBar(
+    navController: NavHostController,
+    navItems: List<NavDestinations>
+) {
+    val currentRoute = currentRoute(navController)
+    NavigationBar {
+        navItems.forEach { destination ->
+            NavigationBarItem(
+                selected = currentRoute == destination.route,
+                onClick = {
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = {
+                    Icon(
+                        painter = painterResource(destination.iconRes),
+                        contentDescription = destination.title
+                    )
+                },
+                label = { Text(destination.title) }
+            )
+        }
+    }
+}
+
+@Composable
+fun AppNavGraph(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = DashboardTabItem.route) {
+        composable(DashboardTabItem.route) { DashboardScreen() }
+        composable(CustomerTabItem.route) { CustomerScreen() }
+        composable(SettingsTabItem.route) { SettingsScreen() }
     }
 }
